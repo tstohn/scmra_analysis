@@ -1,0 +1,42 @@
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.0250.025 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.0060.006 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.038 diff Edges: 13 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.038 diff Edges: 12 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.038 diff Edges: 11 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.034 diff Edges: 11 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.034 diff Edges: 9 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.034 diff Edges: 6 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.034 diff Edges: 6 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.033 diff Edges: 5 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 4 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 4 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 4 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 3 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 3 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 3 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.031 diff Edges: 3 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 1 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 1 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 0 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 0 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.0250.025 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.050.05 edges: 12
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.05 diff Edges: 13 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.05 diff Edges: 13 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.05 diff Edges: 11 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.05 diff Edges: 10 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.05 diff Edges: 9 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.05 diff Edges: 9 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.062 diff Edges: 8 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.062 diff Edges: 6 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.062 diff Edges: 5 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.062 diff Edges: 4 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.053 diff Edges: 4 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.052 diff Edges: 2 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.052 diff Edges: 2 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.052 diff Edges: 1 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.052 diff Edges: 1 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 0 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 0 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 0 edges: 13
+SIMULATION: noise=0.2, cells=250, repeat=0, etas: 0.075 diff Edges: 0 edges: 13
