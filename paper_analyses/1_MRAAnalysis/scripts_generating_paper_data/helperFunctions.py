@@ -141,28 +141,23 @@ class SimulationResults:
         if not isExist:
             os.makedirs(path)
 
-#loading all the data
-# Load the ground-truth data
+#load true rloc/stot values
 DAT_DIR = pyprojroot.here("simulations/true_network_parameters/")
-
 rloc_true = pd.read_csv(os.path.join(DAT_DIR, "rloc-true.tsv"), 
                         sep='\t', header=0, index_col=0)
 stot_true = pd.read_csv(os.path.join(DAT_DIR, "stot-true.tsv"), sep='\t', 
                         header=0, index_col=0)
+
 # Determine the set of true interactions (edges)
 imap_filtered = 1*(abs(rloc_true) > 0.01 + np.identity(rloc_true.shape[0]))
 imap_true = 1*(abs(rloc_true) > 0 + np.identity(rloc_true.shape[0]))
-
 NODES = tuple(imap_true.columns)
 
 dat_dir = pyprojroot.here("data/simulated_data")
-# Unperturbed cells - 1000 cells
 wt = pd.read_csv(os.path.join(dat_dir, "steady-state-sigma=0.1.tsv"), sep='\t')
 wt.index = ["ctr."+str(i) for i in range(wt.shape[0])]
-
 braf = pd.read_csv(os.path.join(dat_dir, "steady-state-sigma=0.1-BRAFmut.tsv"), sep='\t')
 braf.index = ["braf."+str(i) for i in range(braf.shape[0])]
-
 ras = pd.read_csv(os.path.join(dat_dir, "steady-state-sigma=0.1-RASmut.tsv"), sep='\t')
 ras.index = ["ras."+str(i) for i in range(ras.shape[0])]
 
@@ -318,13 +313,11 @@ allNodes = sorted(imap_true.columns)
 rloc_true = pd.read_csv(os.path.join(dirname,"simulations/true_network_parameters/rloc-true.tsv"), sep='\t', header=0, index_col=0)
 rloc_braf = pd.read_csv(os.path.join(dirname,"simulations/true_network_parameters/rloc-braf-true.tsv"), sep='\t', header=0, index_col=0)
 rloc_ras = pd.read_csv(os.path.join(dirname,"simulations/true_network_parameters/rloc-ras-true.tsv"), sep='\t', header=0, index_col=0)
-
 def reorder_rloc(rlocOld):
     colOrder = rloc_true.columns
     rowOrder = rloc_true.index
     rlocNew = rlocOld.reindex(columns=colOrder)
     rlocNew = rlocNew.reindex(rowOrder)
-
     return(rlocNew)
 rloc_braf = reorder_rloc(rloc_braf)
 rloc_ras = reorder_rloc(rloc_ras)
@@ -337,30 +330,6 @@ rlocDict = {"wt": rloc_true, "braf" : rloc_braf, "ras" : rloc_ras}
 #cellTypeDict: mapping of string for cell type (like wt or braf) to the actuall population
 cellTypeDict = {"wt": wt, "braf" : braf, "ras" : ras}
 
-def get_to_dict(matrix):
-    edgeDict = {}
-    rows = list(matrix.index)
-    for col in matrix.columns:
-        colVec = matrix[col]
-        edges = []
-        for i in range(0, len(rows)):
-            if(colVec[i] == 1):
-                edges.append(rows[i])
-        edgeDict[col] = edges    
-    return(edgeDict)
-
-def get_from_dict(matrix):
-    edgeDict = {}
-    cols = list(matrix.columns)
-    for row in matrix.index:
-        colVec = matrix[row]
-        edges = []
-        for i in range(0, len(cols)):
-            if(colVec[i] == 1):
-                edges.append(cols[i])
-        edgeDict[row] = edges    
-    return(edgeDict)
-
 #returns None oi the subset is None
 def get_index_list(list_all, list_subset):
     if(list_subset is None): return(None)
@@ -369,9 +338,6 @@ def get_index_list(list_all, list_subset):
         x = list_all.index(el)
         return_list.append(x)
     return(return_list)
-
-toDict = get_to_dict(imap_true)
-fromDict = get_from_dict(imap_true)
 
 #get a vairable with a certain prefix from singleCellProblem (not from the result)
 def get_variable(scp, solidx=0, prefix=""):
@@ -642,7 +608,7 @@ def generate_cnr_data(cellNum, perturbedNodeIndices, noise, populationList = ["w
 
     return(rglob, rtot, group_annot, cell_annot, tx_annot)
 
-
+#estimate eta by fitting a curve through values
 def estimate_eta_for_network_complexity(etaTonodesDict, folder, name, logFile):
     lists = (etaTonodesDict.items()) # sorted by key, return a list of tuples
     x, y = zip(*lists)
@@ -710,10 +676,8 @@ def make_cnr(rglob, rtot, cell_annot, tx_annot, group_annot, eta, theta, priorNe
 
 #perfectly estimate the eta, by slowly narrowing the possible eta values down
 #abort after certain number of tries and return so far best value
-def get_suitable_solution_fast(rglob, rtot, cell_annot=None, tx_annot=None, group_annot = None, 
-noBidirectionality = False, folder = None, logFile=None, name = None, startingEta = 0.1, 
-expectedEdges = 13, etaGuesses=10, reconstructionType = "MRA", 
-theta=0.0, allowedEdgesFromEstimate = 2, fitExponentialDecayIfNoSolutionFound = False):
+def get_suitable_solution_fast(rglob, rtot, cell_annot=None, tx_annot=None, group_annot = None, startingEta = 0.1, 
+expectedEdges = 13, etaGuesses=10, reconstructionType = "MRA", theta=0.0):
     etaTonodesDict = {}
 
     returnedProblem = None # if we already found a perfect solution, do not calculate new but return
@@ -782,50 +746,16 @@ theta=0.0, allowedEdgesFromEstimate = 2, fitExponentialDecayIfNoSolutionFound = 
 
             etaTonodesDict[etaBoundary.middle] = edges
 
-        #if we do not have sth after x tries we use the eta-edge data we generated so far
-        #to fit a curve through data and check if the result is within error margin...
-        #we can continue forever, until we find a reasonably good eta, then we could fit a function
-        #through the previously found etas...
-        if(not correctEtaFound and fitExponentialDecayIfNoSolutionFound):
-            #try to get an eta
-            try:
-                a, b = estimate_eta_for_network_complexity(etaTonodesDict, folder, name, logFile)
-            
-                #if we got an eta, calculate the result
-                if(reconstructionType == "MRA"):
-                    result = make_mra(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, eta = startingEta)
-                    exampleRloc = result.rloc
-                elif(reconstructionType == "CNR"):
-                    result = make_cnr(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, group_annot=group_annot, eta = etaBoundary.middle, theta=theta)
-                    exampleRloc = list(result.rloc.values())[0]
-                #get the number of edges from this result
-                numEdges = 0
-                for column_name in exampleRloc:
-                    column = exampleRloc[column_name]
-                    numEdges += (column != 0).sum()
-                    numEdges -=1 #for the diagonal values
-
-                if( (numEdges - expectedEdges)**2 < allowedEdgesFromEstimate**2):
-                    solutionFound = True
-                    returnedProblem = result
-                    returnedNumEdges = numEdges
-                else:
-                    solutionFound = False 
-                    currentEtaTest = 1 
-            except:
-                solutionFound = False
-                currentEtaTest = 1
-        else:
-            #we accept whatever we found until now, we can increase the number of tries to get a better eta
-            #if we do not mind longer running time
-            correctEtaFound = True
-            returnedProblem = result
-            solutionFound = True
-            a = etaBoundary.middle
-            returnedNumEdges = edgeBoundary.middle
+        #if we do not have sth after x tries we use the best estimate so far
+        correctEtaFound = True
+        returnedProblem = result
+        solutionFound = True
+        a = etaBoundary.middle
+        returnedNumEdges = edgeBoundary.middle
+        
     return(a, returnedProblem, returnedNumEdges)
 
-#the estimation metod for eta
+#the estimation method for eta
 def estimate_eta(rglob, rtot, cell_annot=None, tx_annot=None, noBidirectionality = False,  
                 folder = None, logFile=None, name = None, perturbedNodeDict = None, etasInput = None,
                  modelPertRloc = False, modelPertStot=False):
@@ -900,8 +830,6 @@ def estimate_eta_cnr(rglob, rtot, cell_annot=None, tx_annot=None, group_annot = 
     a, b = estimate_eta_for_network_complexity(etaTonodesDict, folder, name, None)
 
     return(a, b)
-
-
 
 def calc_rmse(true_values, estimated_values):
     assert(np.array_equal(true_values.columns, estimated_values.columns))
@@ -1149,8 +1077,6 @@ def generate_raw_data_for_MRA_and_CNR(cellNum, noise, mutant):
 #function to simulate a simple MRA with a certain population
 def simulate_mra_from_data(cellPopulation, noise, cell, f, count, result, rglob, rtot, cell_annot, tx_annot, PopulationID):
 
-    #etasInput = [0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.5, 0.7, 0.9]
-    #eta, etaListNew = estimate_eta(rglob, rtot, cell_annot, tx_annot, withFlattening = True, etasInput=etasInput)
     edgesToReconstruct = 13
     if(cellPopulation == "ras"):
         edgesToReconstruct = 12
@@ -1179,9 +1105,6 @@ def simulate_mra_from_data(cellPopulation, noise, cell, f, count, result, rglob,
 #function to simulate a CNR with a defined set of populations among the possible ones=[wt, ras, braf]
 def simulate_cnr_from_data(cellPopulationList, noise, cell, f, count, result, rglob, rtot, cell_annot, tx_annot, group_annot, theta):
     
-    #theta = THETA
-    #scd = scmra.ScData(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, group_annot= group_annot)
-
     eta, scCnrResult, edgeNumber = get_suitable_solution_fast(rglob, rtot, cell_annot, tx_annot, group_annot, 
                 etaGuesses=30, reconstructionType = "CNR", theta = theta)
 
