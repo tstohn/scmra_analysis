@@ -4,7 +4,7 @@ Writes out the result for a CNR simulation, only writes out RMSE of rloc values
 '''
 
 import sys, getopt
-sys.path.insert(0, '../../helperScripts/')
+sys.path.insert(0, '..') #path to helperFunctions
 from helperFunctions import *
 
 def main(argv):

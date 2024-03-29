@@ -4,7 +4,7 @@ Using this script we calculate a couple of metrics for the scMRA analysis and wr
 '''
 
 import sys, getopt
-sys.path.insert(0, '../scripts_generating_paper_data/')
+sys.path.insert(0, '../..') #path to helperFunctions
 from helperFunctions import *
 
 def main(argv):

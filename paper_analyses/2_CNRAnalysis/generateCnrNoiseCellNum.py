@@ -1,8 +1,7 @@
 
 #generate data do compare network quality
 import sys
-sys.path.insert(0, '../../helperScripts/')
-sys.path.insert(0,'/home/t.stohn/Tools/CPLEX_Studio201/cplex/python/3.8/x86-64_linux')
+sys.path.insert(0, '..') #path to helperFunctions
 
 from helperFunctions import *
 

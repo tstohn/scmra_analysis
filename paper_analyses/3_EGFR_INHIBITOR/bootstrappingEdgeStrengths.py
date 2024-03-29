@@ -2,7 +2,6 @@
 
 
 import sys
-sys.path.insert(0, '../../helperScripts/')
 from IDseqHelperFunctions import *
 
 import scmra

@@ -12,7 +12,7 @@ that for this maximum edge number almost all true edges are found (TPR=100%)
 
 #generate data do compare network quality
 import sys
-sys.path.insert(0, '../scripts_generating_paper_data/')
+sys.path.insert(0, '../..') #path to helperFunctions
 from helperFunctions import *
 import scmra
 import os

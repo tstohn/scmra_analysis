@@ -4,7 +4,7 @@ used in the paper mainly for the MRA & CNR comparison
 '''
 
 import sys, getopt, math
-sys.path.insert(0, '../../helperScripts/')
+sys.path.insert(0, '..') #path to helperFunctions
 from helperFunctions import *
 
 OUTFILE = "CnrMraComparison.tsv"

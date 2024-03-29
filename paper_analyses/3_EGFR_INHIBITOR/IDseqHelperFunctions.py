@@ -1,3 +1,5 @@
+
+sys.path.insert(0, '../..') #path to helperFunctions
 from helperFunctions import *
 
 #global analysis variables: 8 different edges
