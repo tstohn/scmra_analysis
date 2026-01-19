@@ -1,5 +1,6 @@
+import sys
 
-sys.path.insert(0, '../..') #path to helperFunctions
+sys.path.insert(0, '..') #path to helperFunctions
 from helperFunctions import *
 
 #global analysis variables: 8 different edges
@@ -23,7 +24,9 @@ ab_mapping_phospho = {
 'Fak-p' : "FAK",
 #EDFRY1045 is not 100% known, but guessed from old panel
 #"EGFR-p" : "EGFRY1045",  "EGFR-p_AF1095" : "EGFRY1173" ,
-"EGFR-p" : "EGFRY1045",  "EGFR-p_AF1095" : "EGFRY1173" ,
+#"EGFR-p" : "EGFRY1045",  "EGFR-p_AF1095" : "EGFRY1173" ,
+#for a single EGFR node: in the raw data we sum the two different phosphosites to EGFR-p
+"EGFR-p" : "EGFR",
 "ERK1-2-p" : "ERK12",
 "RSK-p90-p" : "p90RSK",
 "Akt-p_4060" : "AKT1", "Akt123-p" : "AKT123",
@@ -58,7 +61,7 @@ ab_mapping_phospho = {
 "STAT3-p" : "STAT3",
 "STAT5-p" : "STAT5",
 
-"Frizzled-3" : "FRZ",
+"Frizzled-3" : "FZD",
 "LRP6-p" : "LRP6",
 
 "Src-p" : "SRC",
@@ -156,17 +159,18 @@ set(flatten(ALL_EDGES)) - set(NODE_NAMES)
 #REMOVED FZD edges
 CANNONICAL_EDGES = [
     # MAPK pathway
-    ("ERK12", "EGFRY1173"), ("ERK12","EGFRY1045"),
-    ("AKT1", "EGFRY1173"), ("AKT1", "EGFRY1045"),
-    ("AKT123", "EGFRY1173"), ("AKT123", "EGFRY1045"), 
-    ("JNK", "EGFRY1173"), ("JNK", "EGFRY1045"), 
-    ("SRC", "EGFRY1173"), ("SRC", "EGFRY1045"), 
+    
+    #("ERK12", "EGFRY1173"), ("ERK12","EGFRY1045"),
+    #("AKT1", "EGFRY1173"), ("AKT1", "EGFRY1045"),
+    #("AKT123", "EGFRY1173"), ("AKT123", "EGFRY1045"), 
+    #("JNK", "EGFRY1173"), ("JNK", "EGFRY1045"), 
+    #("SRC", "EGFRY1173"), ("SRC", "EGFRY1045"), 
 
-    #("ERK12", "EGFR"),
-    #("AKT1", "EGFR"),
-    #("AKT123", "EGFR"),
-    #("JNK", "EGFR"),
-    #("SRC", "EGFR"),
+    ("ERK12", "EGFR"),
+    ("AKT1", "EGFR"),
+    ("AKT123", "EGFR"),
+    ("JNK", "EGFR"),
+    ("SRC", "EGFR"),
 
     ("RSK", "ERK12"),("CMYC", "ERK12"), ("CFOS", "ERK12"), #("RSK1S380", "ERK12"),
     ("STAT3", "ERK12"), # ERK
@@ -180,8 +184,8 @@ CANNONICAL_EDGES = [
     ("SRC", "ITGB1"), # ITGB1
     ("FAK", "SRC"), # SRC
     ("STAT3", "JAK1"), ("STAT5", "JAK1"), ("STAT1", "JAK1"), # JAK
-#    ("FZD", "LRP6"), # LRP6
-#    ("GSK3B", "FZD"), # FZD
+    ("FZD", "LRP6"), # LRP6
+    ("GSK3B", "FZD"), # FZD
     # MKK signaling
     ("MKK36", "GSK3B"), #GSK3B
     ("P38", "MKK36"),("P38D", "MKK36"), # MKK36
@@ -195,7 +199,7 @@ CANNONICAL_EDGES = [
 ]
 
 # add edges of pps
-psp = pd.read_csv("/DATA/t.stohn/MRA/scMRA-analysis/data/resources/substrate-kinase-psp.tsv", sep="\t")
+psp = pd.read_csv("/DATA/t.stohn/MRA/scmra_analysis/data/resources/substrate-kinase-psp.tsv", sep="\t")
 psp = psp[psp['SUB_NODE_NAME'].isin(NODE_NAMES)]
 psp = psp[psp['KIN_NODE_NAME'].isin(NODE_NAMES)]
 PSP_INTERACTIONS = list(zip(psp.SUB_NODE_NAME, psp.KIN_NODE_NAME))

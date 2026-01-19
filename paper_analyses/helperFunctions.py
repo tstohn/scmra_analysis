@@ -23,6 +23,7 @@ import matplotlib
 from datetime import datetime
 from collections import defaultdict
 from copy import deepcopy
+import csv
 
 import scmra
 
@@ -52,7 +53,17 @@ class MRASimulationClass:
         self._parameterList.append(param)
     def add_result(self, newResult):
         self._resultList.append(newResult)
-
+        
+    def write_results(self, file):
+        with open(file, "w", newline="") as f:
+            writer = csv.writer(f, delimiter="\t")  # Tab-separated
+            writer.writerow(self._headerList)
+            writer.writerows(self._parameterList)  # Write all rows
+            
+    def extend_last_parameter(self, element):
+        if self._parameterList:
+            self._parameterList[-1].append(element)
+            
     #returns results from this object
     #keylist stores the key for which to check
     #and valueList contains the correcponding values for the keys (in same order!)
@@ -310,9 +321,9 @@ PerturbDataListbraf = [v for k,v in (sorted(PerturbDataListbraf.items()))]
 PerturbDataListras = [v for k,v in (sorted(PerturbDataListras.items()))]
 
 allNodes = sorted(imap_true.columns)
-rloc_true = pd.read_csv(os.path.join(dirname,"simulations/true_network_parameters/rloc-true.tsv"), sep='\t', header=0, index_col=0)
-rloc_braf = pd.read_csv(os.path.join(dirname,"simulations/true_network_parameters/rloc-braf-true.tsv"), sep='\t', header=0, index_col=0)
-rloc_ras = pd.read_csv(os.path.join(dirname,"simulations/true_network_parameters/rloc-ras-true.tsv"), sep='\t', header=0, index_col=0)
+rloc_true = pd.read_csv(os.path.join(dirname,"../simulations/true_network_parameters/rloc-true.tsv"), sep='\t', header=0, index_col=0)
+rloc_braf = pd.read_csv(os.path.join(dirname,"../simulations/true_network_parameters/rloc-braf-true.tsv"), sep='\t', header=0, index_col=0)
+rloc_ras = pd.read_csv(os.path.join(dirname,"../simulations/true_network_parameters/rloc-ras-true.tsv"), sep='\t', header=0, index_col=0)
 def reorder_rloc(rlocOld):
     colOrder = rloc_true.columns
     rowOrder = rloc_true.index
@@ -423,7 +434,7 @@ def performance_metrics(imap, ref_imap):
     n_diag = imap.shape[0]
     tp = ((imap == 1) & (ref_imap == 1)).sum().sum() # True positive
     fp = ((imap == 1) & (ref_imap == 0)).sum().sum() # False positive
-    tn = ((imap == 0) & (ref_imap == 0)).sum().sum() - n_diag # True negative
+    tn = ((imap == 0) & (ref_imap == 0)).sum().sum() - n_diag # True negative, we need to substract diagonal, the imap contains no -1 but zero diagonals, opposite to the rloc matrix
     fn = ((imap == 0) & (ref_imap == 1)).sum().sum() # False negative
 
     return {"tp": tp, "fp": fp, "tn": tn, "fn" : fn}
@@ -656,28 +667,35 @@ def estimate_eta_for_network_complexity(etaTonodesDict, folder, name, logFile):
 
     return(etaGuess, etaList)
 
-def make_mra(rglob, rtot, cell_annot, tx_annot, eta):
+def make_mra(rglob, rtot, cell_annot, tx_annot, eta, pN = None):
     if(cell_annot is None):
         scd = scmra.ScData(rglob=rglob, rtot = rtot)
     else:
         scd = scmra.ScData(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot)
 
     p = scmra.ScMraProblem(scd, eta = eta)
+    if(pN is not None):
+        scmra.sccplex.set_interactions_status(p, pN, 1)
     p.cpx.solve()
     result = scmra.ScMraResult(p)
     return(result)
 
-def make_cnr(rglob, rtot, cell_annot, tx_annot, group_annot, eta, theta, priorNetwork=None):
+def make_cnr(rglob, rtot, cell_annot, tx_annot, group_annot, eta, theta, priorNetwork=None, priorCnr = None):
     scd = scmra.ScData(rglob=rglob, rtot=rtot, cell_annot=cell_annot, tx_annot=tx_annot, group_annot=group_annot)
     p = scmra.ScCnrProblem(scd, eta=eta, theta=theta, prior_network=priorNetwork)
+    if(priorCnr is not None):
+        for indicator, status in priorCnr.vardict.items():
+            if indicator.startswith(("I","IDev", "ISDev", "IPDev")):
+                scmra.cplexutils.set_indicator_status(p.cpx, indicator, status)
     p.cpx.solve()
     result = scmra.ScCnrResult(p)
     return(result)
 
 #perfectly estimate the eta, by slowly narrowing the possible eta values down
 #abort after certain number of tries and return so far best value
+#Prior network is not a PRIOR NETWORK per se, but fixed indicators, and additional edges can be added
 def get_suitable_solution_fast(rglob, rtot, cell_annot=None, tx_annot=None, group_annot = None, startingEta = 0.1, 
-expectedEdges = 13, etaGuesses=10, reconstructionType = "MRA", theta=0.0):
+expectedEdges = 13, etaGuesses=10, reconstructionType = "MRA", theta=0.0, priorNetwork = None):
     etaTonodesDict = {}
 
     returnedProblem = None # if we already found a perfect solution, do not calculate new but return
@@ -696,7 +714,7 @@ expectedEdges = 13, etaGuesses=10, reconstructionType = "MRA", theta=0.0):
 
     #estimate first edges for initial eta
     if(reconstructionType == "MRA"):
-        result = make_mra(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, eta = startingEta)
+        result = make_mra(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, eta = startingEta, pN = priorNetwork)
     elif(reconstructionType == "CNR"):
         result = make_cnr(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, group_annot=group_annot, eta = etaBoundary.middle, theta=theta)
 
@@ -737,7 +755,7 @@ expectedEdges = 13, etaGuesses=10, reconstructionType = "MRA", theta=0.0):
                 edgeBoundary.upper = lastEdgeBoudary.upper
             #otherwise continue x-times
             if(reconstructionType == "MRA"):
-                result = make_mra(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, eta = etaBoundary.middle)
+                result = make_mra(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, eta = etaBoundary.middle, pN = priorNetwork)
             elif(reconstructionType == "CNR"):
                 result = make_cnr(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, group_annot=group_annot, eta = etaBoundary.middle, theta=theta)
 
@@ -864,6 +882,10 @@ def write_metrics_to_csv_from_pickle_MRA(pickleFile, outputFile):
     rmseList = []
     precision = []
     recall = []
+    pi3k_ras = []
+    mek_raf1 = []
+    sos_ras = []
+    raf_sos = []
 
     for i in range(resultNumber):
         scMraResult = result.result[i]
@@ -874,6 +896,10 @@ def write_metrics_to_csv_from_pickle_MRA(pickleFile, outputFile):
         fpr.append(outputMetrics['fp']/(outputMetrics['fp'] + outputMetrics['tn']))
         precision.append(outputMetrics['tp']/(outputMetrics['tp'] + outputMetrics['fp']))
         recall.append(outputMetrics['tp']/(outputMetrics['tp'] + outputMetrics['fn']))
+        pi3k_ras.append(scMraResult.imap.loc["PI3K","Ras"])
+        mek_raf1.append(scMraResult.imap.loc["Mek","Raf1"])
+        sos_ras.append(scMraResult.imap.loc["Sos","Ras"])
+        raf_sos.append(scMraResult.imap.loc["Raf1","Sos"])
 
         #GET NUMBER EDGES IN THIS NETWORK
         numEdges = 0
@@ -895,6 +921,10 @@ def write_metrics_to_csv_from_pickle_MRA(pickleFile, outputFile):
     df["RMSE"] = rmseList
     df["PRECISION"] = precision
     df["RECALL"] = recall
+    df["PI3K_RAS_EDGE"] = pi3k_ras
+    df["MEK_RAF1_EDGE"] = mek_raf1
+    df["SOS_RAS_EDGE"] = sos_ras
+    df["RAF1_SOS_EDGE"] = raf_sos
 
     df.to_csv(outputFile, sep="\t", index=False)
 
@@ -915,6 +945,7 @@ def write_metrics_to_csv_from_pickle_CNR(pickleFile, outputFile, metricCanContai
     resultNumber = len(result.parameter)
     for i in range(resultNumber):
         params = result.parameter[i]
+        print(params)
         df_length = len(df)
         df.loc[df_length] = params
         
@@ -1094,26 +1125,39 @@ def simulate_mra_from_data(cellPopulation, noise, cell, f, count, result, rglob,
     residuals = 0
     n_res = np.size(scMraResult.residuals_complete) + \
             np.size(scMraResult.residuals_incomplete)
-    residuals += np.sum(np.array(np.square(scMraResult.residuals_complete)))/n_res
-    residuals += np.sum(np.array(np.square(scMraResult.residuals_incomplete)))/n_res
-    result.add_parameter([noise, cell, eta, count, edgeNumber, "MRA", PopulationID, numDiffEdges, "NO_THETA",residuals])
+    residuals += np.sum(np.array(np.square(scMraResult.residuals_complete)))
+    residuals += np.sum(np.array(np.square(scMraResult.residuals_incomplete)))
+    modelComplexity = "-" #we have no complexity for MRA (it is the number of indicator constraints in scCNR for MRA/CNR comparison)
+    result.add_parameter([noise, cell, eta, count, edgeNumber, "MRA", PopulationID, numDiffEdges, "NO_THETA",residuals, modelComplexity])
 
     #update logfile
     f.write(str(round(eta,3)) + " edges: " + str(edgeNumber) + "\n")
     f.flush()
 
 #function to simulate a CNR with a defined set of populations among the possible ones=[wt, ras, braf]
-def simulate_cnr_from_data(cellPopulationList, noise, cell, f, count, result, rglob, rtot, cell_annot, tx_annot, group_annot, theta):
+def simulate_cnr_from_data(cellPopulationList, noise, cell, f, count, result, rglob, rtot, cell_annot, tx_annot, group_annot, theta, eta = None,
+                           fixIndicatorFrom = None):
     
-    eta, scCnrResult, edgeNumber = get_suitable_solution_fast(rglob, rtot, cell_annot, tx_annot, group_annot, 
-                etaGuesses=30, reconstructionType = "CNR", theta = theta)
+    if(eta is None):
+        eta, scCnrResult, edgeNumber = get_suitable_solution_fast(rglob, rtot, cell_annot, tx_annot, group_annot, 
+                    etaGuesses=30, reconstructionType = "CNR", theta = theta)
+    else:
+        scCnrResult = make_cnr(rglob=rglob, rtot = rtot, cell_annot=cell_annot, tx_annot=tx_annot, group_annot=group_annot, eta = eta, theta=theta, 
+                               priorNetwork=None, priorCnr = fixIndicatorFrom)
+        edgeNumber = scCnrResult.imap.sum().sum()
 
     #get number of different edges
     vars_lst = [var for var in scCnrResult.vardict if var.startswith('IDev')]
     vars_vals = [scCnrResult.vardict[v] for v in vars_lst]
     lengthIdcs = (np.count_nonzero(vars_vals))
     numDiffEdges = lengthIdcs
-
+    
+    #get model complexity: number of indicators for I, IDev, i
+    vars_lst_complexity = [var for var in scCnrResult.vardict if var.startswith(("I","IDev", "ISDev", "IPDev"))]
+    vars_vals_complexity = [scCnrResult.vardict[v] for v in vars_lst_complexity]
+    lengthIdcs_complexity = (np.count_nonzero(vars_vals_complexity))
+    modelComplexity = lengthIdcs_complexity
+    
     #update logfile
     f.write("SIMULATION: noise=" + str(noise) + ", cells=" + str(cell) + ", repeat=" + str(count) + 
             ", etas: " + str(round(eta,3)) + " diff Edges: " + str(lengthIdcs) )
@@ -1129,13 +1173,32 @@ def simulate_cnr_from_data(cellPopulationList, noise, cell, f, count, result, rg
     residuals = 0
     n_res = np.size(scCnrResult.residuals_complete) + \
             np.size(scCnrResult.residuals_incomplete)
-    residuals += np.sum(np.array(np.square(scCnrResult.residuals_complete)))/n_res
-    residuals += np.sum(np.array(np.square(scCnrResult.residuals_incomplete)))/n_res
+    residuals += np.sum(np.array(np.square(scCnrResult.residuals_complete)))
+    residuals += np.sum(np.array(np.square(scCnrResult.residuals_incomplete)))
 
-    result.add_parameter([noise, cell, eta, count, edgeNumber, "CNR", populationString, numDiffEdges, theta, residuals])
+    result.add_parameter([noise, cell, eta, count, edgeNumber, "CNR", populationString, numDiffEdges, theta, residuals, modelComplexity])
 
     f.write(" edges: " + str(edgeNumber) + "\n")
     f.flush()
 
     #add simulation output to result
     result.add_result(s)
+    return(s)
+
+#THIS FUNCTION ONLY WORKS WITHOUT PERTURBATIONS AND WITH ALL TOTAL PROTEINS MEASURED!!!
+def get_residuals_on_new_data(scCNR_result, new_rglob, new_rtot, new_group_anno, result):
+    new_residuals = 0
+    
+    # calculate new residuals
+    for cell_population, cellIDList in new_group_anno.items():
+        #we can calcualte matrix product with pandasFrameA.dot(pandasFrameB)
+        activeproteinInteractionMatrix = scCNR_result.rloc[cell_population].dot(new_rglob[cellIDList])
+        totalproteinDeviationMatrix = scCNR_result.stot[cell_population].dot(new_rtot[cellIDList])   
+        activeExplainedMatrix = activeproteinInteractionMatrix + totalproteinDeviationMatrix
+    
+        squared_df = activeExplainedMatrix ** 2
+        residuals = squared_df.sum().sum()
+        new_residuals += residuals
+
+    #add the calculated residuals
+    result.extend_last_parameter(new_residuals)

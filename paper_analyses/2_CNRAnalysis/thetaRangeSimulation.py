@@ -5,7 +5,7 @@ from helperFunctions import *
 
 scriptTitle = "THETA_ESTIMATION_Noise:20_Cellnum:250"
 
-#generate MRA + CNR data for smae population with theta range to
+#generate MRA + CNR data for some population with theta range to
 # 1. make theta dependant plot
 # 2. estimte good theta for other runs
 
@@ -14,14 +14,14 @@ scriptTitle = "THETA_ESTIMATION_Noise:20_Cellnum:250"
 ################################################
 
 #more sophisitcated evaluation how food rloc/stot plus new scaling actually works (we have some values from previous tests, just do some more now...)
-noiseArray = [0.2] #also tested 0.5 which did not yield great results combined with 2*500 cells
+noiseArray = [0.2] 
 #cellnum is the number of cells per subgroup: in total 500 cells (tested 2*500 before)
 cellNumArray = [250]
 repeats = 1
 thetas = [0.0,0.0001, 0.0005, 0.001, 0.0015, 0.002, 0.0025,0.005, 0.01,0.02, 0.03, 0.06, 0.1, 0.25, 0.3, 0.4, 0.5, 0.75,1]
 
 #add header to result
-header = ['NOISE', 'CELLNUM', 'ETA', 'REPEAT', 'EDGES', 'MODELTYPE','POPULATIONS','NUMDIFFEDGES','THETA','RESIDUALS']
+header = ['NOISE', 'CELLNUM', 'ETA', 'REPEAT', 'EDGES', 'MODELTYPE','POPULATIONS','NUMDIFFEDGES','THETA','RESIDUALS','MODELCOMPLEXITY']
 result = MRASimulationClass(header)
 
 logFile = "./bin/log_" + scriptTitle + ".txt"

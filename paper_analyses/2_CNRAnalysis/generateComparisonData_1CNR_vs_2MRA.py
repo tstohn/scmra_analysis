@@ -22,7 +22,7 @@ cellNumArray = [250]
 repeats = 20
 
 #add header to result
-header = ['NOISE', 'CELLNUM', 'ETA', 'REPEAT', 'EDGES', 'MODELTYPE','POPULATIONS','NUMDIFFEDGES','THETA','RESIDUALS']
+header = ['NOISE', 'CELLNUM', 'ETA', 'REPEAT', 'EDGES', 'MODELTYPE','POPULATIONS','NUMDIFFEDGES','THETA','RESIDUALS','MODELCOMPLEXITY']
 result = MRASimulationClass(header)
 
 logFile = "./bin/log_" + scriptTitle + ".txt"
